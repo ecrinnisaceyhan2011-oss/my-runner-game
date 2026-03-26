@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>MyAll Simit Runner 🥨🚀</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: linear-gradient(to bottom, #87CEEB, #E0F7FA); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
+        canvas { display: block; }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 28px; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); pointer-events: none; font-weight: bold; }
+        #gameOverScreen { position: absolute; inset: 0; background: rgba(0,0,0,0.85); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 45px; text-align: center; display: none; z-index: 10; }
+        .score-info { font-size: 25px; margin-top: 10px; color: #FFCC80; }
+        button { margin-top: 30px; padding: 15px 50px; font-size: 24px; background: #FF9800; border: none; border-radius: 50px; color: white; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        button:hover { background: #F57C00; transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+<div id="ui">Score: <span id="score">0</span> | Best: <span id="highscore">0</span></div>
+<canvas id="game"></canvas>
+
+<div id="gameOverScreen"> 
+    <div>GAME OVER!</div> 
+    <div class="score-info">Your Score: <span id="finalScore">0</span></div> 
+    <button id="restart">Try Again 🥨</button> 
+</div>
+
+<script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const highscoreEl = document.getElementById('highscore');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalScoreEl = document.getElementById('finalScore');
+    const restartBtn = document.getElementById('restart');
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let score = 0;
+    let highscore = localStorage.getItem('simitHighscore') || 0;
+    highscoreEl.textContent = highscore;
+    let gameRunning = true;
+    
+    let groundY = canvas.height - 100;
+
+    let player = { 
+        x: 100, 
+        y: groundY - 80, 
+        width: 60, 
+        height: 80, 
+        vy: 0, 
+        gravity: 0.8, 
+        jumpPower: -18, 
+        isJumping: false 
+    };
+
+    let obstacles = [];
+    let collectibles = [];
+    let speed = 6;
+    let spawnTimer = 0;
+    let spawnInterval = 90;
+
+    function jump() {
+        if (!player.isJumping && gameRunning) {
+            player.vy = player.jumpPower;
+            player.isJumping = true;
+        }
+    }
+
+    window.addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'ArrowUp') jump(); });
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); }, {passive: false});
+    canvas.addEventListener('click', jump);
+
+    function spawnObstacle() {
+        obstacles.push({ x: canvas.width, y: groundY - 80, width: 50, height: 80 });
+    }
+
+    function spawnSimit() {
+        collectibles.push({ x: canvas.width, y: 150 + Math.random() * (canvas.height * 0.4), radius: 25 });
+    }
+
+    function update() {
+        if (!gameRunning) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Ground
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+        // Player Gravity
+        player.vy += player.gravity;
+        player.y += player.vy;
+
+        if (player.y >= groundY - player.height) {
+            player.y = groundY - player.height;
+            player.vy = 0;
+            player.isJumping = false;
+        }
+
+        // Draw Player (Nisa's character)
+        ctx.fillStyle = '#E91E63'; 
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+        ctx.fillStyle = '#FFF';
+        ctx.fillRect(player.x + 35, player.y + 15, 12, 12); // Eye
+
+        // Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.x -= speed;
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+            if (player.x < obs.x + obs.width && player.x + player.width > obs.x &&
+                player.y < obs.y + obs.height && player.y + player.height > obs.y) {
+                gameOver();
+            }
+            if (obs.x + obs.width < 0) obstacles.splice(i, 1);
+        }
+
+        // Simit (Collectibles)
+        for (let
