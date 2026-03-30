@@ -1,130 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MyAll Simit Runner 🥨</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simit Runner | Nisa 🥨</title>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #87CEEB; font-family: sans-serif; touch-action: none; }
-        canvas { display: block; }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; font-size: 20px; text-shadow: 2px 2px 2px black; z-index: 10; pointer-events: none; }
-        #gameOver { position: absolute; inset: 0; background: rgba(0,0,0,0.8); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
-        button { padding: 10px 30px; font-size: 20px; background: #FF9800; border: none; color: white; border-radius: 10px; cursor: pointer; }
+        body {
+            margin: 0; padding: 0; overflow: hidden;
+            background: #fff5f8; font-family: 'Segoe UI', sans-serif;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        #game-container {
+            position: relative; width: 600px; height: 300px;
+            background: white; border-bottom: 5px solid #880e4f;
+            border-radius: 20px; overflow: hidden;
+            display: none; /* Seçim yapılana kadar gizli */
+            box-shadow: 0 15px 35px rgba(248, 187, 208, 0.4);
+        }
+        #player {
+            position: absolute; bottom: 0; left: 50px;
+            width: 60px; height: 60px; font-size: 45px;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10;
+        }
+        .obstacle {
+            position: absolute; bottom: 0; right: -50px;
+            width: 40px; height: 40px; font-size: 30px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #score {
+            position: absolute; top: 15px; left: 20px;
+            font-size: 22px; font-weight: bold; color: #ad1457; z-index: 20;
+        }
+
+        /* SEÇİM EKRANI */
+        #selection-screen {
+            text-align: center; background: white; padding: 40px;
+            border-radius: 30px; box-shadow: 0 10px 40px rgba(248,187,208,0.6);
+        }
+        h1 { color: #880e4f; margin-bottom: 30px; }
+        .char-box {
+            display: inline-block; margin: 15px; padding: 25px;
+            border: 3px solid #f8bbd0; border-radius: 25px;
+            cursor: pointer; transition: 0.3s; width: 120px;
+        }
+        .char-box:hover { background: #fce4ec; transform: translateY(-8px); border-color: #ad1457; }
+        .char-emoji { font-size: 55px; display: block; margin-bottom: 10px; }
+        .char-name { font-weight: bold; color: #880e4f; font-size: 14px; text-transform: uppercase; }
+
+        /* ZIPLAMA ANİMASYONU */
+        .jump { animation: jump-anim 0.5s cubic-bezier(0.21, 0.53, 0.56, 0.8); }
+        @keyframes jump-anim {
+            0% { bottom: 0; }
+            45% { bottom: 120px; }
+            55% { bottom: 120px; }
+            100% { bottom: 0; }
+        }
     </style>
 </head>
 <body>
-    <div id="ui">Score: <span id="score">0</span> | Best: <span id="highscore">0</span></div>
-    <div id="gameOver">
-        <h1>GAME OVER!</h1>
-        <p>Score: <span id="finalScore">0</span></p>
-        <button onclick="resetGame()">Try Again 🥨</button>
+
+    <div id="selection-screen">
+        <h1>Karakterini Seç ✨</h1>
+        
+        <div class="char-box" onclick="startGame('🌻', 'Sunflower')">
+            <span class="char-emoji">🌻</span>
+            <span class="char-name">Sunflower</span>
+        </div>
+        
+        <div class="char-box" onclick="startGame('🌑', 'Nightmare')">
+            <span class="char-emoji">🌑</span>
+            <span class="char-name">Nightmare</span>
+        </div>
+        
+        <div class="char-box" onclick="startGame('✨', 'Twilight')">
+            <span class="char-emoji">✨</span>
+            <span class="char-name">Twilight</span>
+        </div>
+
+        <p style="color: #ad1457; margin-top: 25px; font-weight: 600;">Zıplamak için tıkla veya Boşluk tuşuna bas!</p>
     </div>
-    <canvas id="game"></canvas>
 
-<script>
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    
-    let width, height, groundY;
-    let score = 0;
-    let highscore = localStorage.getItem('simitBest') || 0;
-    let gameActive = true;
+    <div id="game-container" id="gameArea" onclick="jump()">
+        <div id="score">Skor: 0</div>
+        <div id="player">🌻</div>
+    </div>
 
-    function resize() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-        groundY = height - 80;
-    }
-    window.addEventListener('resize', resize);
-    resize();
+    <script>
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('game-container');
+        const selectionScreen = document.getElementById('selection-screen');
+        const scoreElement = document.getElementById('score');
 
-    let player = { x: 50, y: 0, w: 40, h: 60, vy: 0, gravity: 0.7, jump: -15, grounded: false };
-    let obstacles = [];
-    let simits = [];
-    let speed = 6;
-    let spawnTimer = 0;
+        let score = 0;
+        let isJumping = false;
+        let gameActive = false;
+        let gameSpeed = 5; // Başlangıç hızı
 
-    function jump() {
-        if(player.grounded && gameActive) {
-            player.vy = player.jump;
-            player.grounded = false;
-        }
-    }
-
-    window.addEventListener('keydown', e => { if(e.code === 'Space') jump(); });
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); }, {passive: false});
-
-    function update() {
-        if(!gameActive) return;
-        ctx.clearRect(0, 0, width, height);
-
-        // Ground
-        ctx.fillStyle = '#4CAF50';
-        ctx.fillRect(0, groundY, width, 80);
-
-        // Player
-        player.vy += player.gravity;
-        player.y += player.vy;
-        if(player.y + player.h > groundY) {
-            player.y = groundY - player.h;
-            player.vy = 0;
-            player.grounded = true;
-        }
-        ctx.fillStyle = '#E91E63';
-        ctx.fillRect(player.x, player.y, player.w, player.h);
-
-        // Logic
-        spawnTimer++;
-        if(spawnTimer > 80) {
-            if(Math.random() > 0.5) obstacles.push({x: width, y: groundY-50, w: 30, h: 50});
-            else simits.push({x: width, y: groundY-150});
-            spawnTimer = 0;
+        function startGame(emoji, name) {
+            player.innerText = emoji;
+            selectionScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            gameActive = true;
+            score = 0;
+            gameSpeed = 5;
+            spawnObstacle();
+            console.log(name + " sahneye çıktı! ✨");
         }
 
-        obstacles.forEach((o, i) => {
-            o.x -= speed;
-            ctx.fillStyle = '#5D4037';
-            ctx.fillRect(o.x, o.y, o.w, o.h);
-            if(player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) endGame();
-            if(o.x < -50) obstacles.splice(i, 1);
-        });
-
-        simits.forEach((s, i) => {
-            s.x -= speed;
-            ctx.font = '30px Arial';
-            ctx.fillText('🥨', s.x, s.y);
-            if(Math.hypot(player.x - s.x, player.y - s.y) < 50) {
-                score += 10;
-                simits.splice(i, 1);
+        function jump() {
+            if (!isJumping && gameActive) {
+                isJumping = true;
+                player.classList.add('jump');
+                setTimeout(() => {
+                    player.classList.remove('jump');
+                    isJumping = false;
+                }, 500);
             }
-            if(s.x < -50) simits.splice(i, 1);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // Sayfanın aşağı kaymasını engeller
+                jump();
+            }
         });
 
-        score += 0.1;
-        document.getElementById('score').textContent = Math.floor(score);
-        document.getElementById('highscore').textContent = highscore;
-        speed += 0.001;
-        requestAnimationFrame(update);
-    }
+        function spawnObstacle() {
+            if (!gameActive) return;
 
-    function endGame() {
-        gameActive = false;
-        if(score > highscore) {
-            highscore = Math.floor(score);
-            localStorage.setItem('simitBest', highscore);
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            obstacle.innerText = '🥨';
+            gameContainer.appendChild(obstacle);
+
+            let pos = 600;
+            let move = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(move);
+                    return;
+                }
+
+                pos -= gameSpeed;
+                obstacle.style.left = pos + 'px';
+
+                // Çarpışma Testi
+                let pBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
+                
+                // Oyuncu kutusu ile simit kutusu yakınlaştığında
+                if (pos < 90 && pos > 50 && pBottom < 50) {
+                    gameActive = false;
+                    alert("Oyun Bitti! Skorun: " + score + "\nTekrar denemek için tamam de!");
+                    location.reload();
+                }
+
+                if (pos < -50) {
+                    clearInterval(move);
+                    obstacle.remove();
+                    score += 10;
+                    scoreElement.innerText = "Skor: " + score;
+                    
+                    // Puan arttıkça hızı minik minik artır (Max 12 hız)
+                    if (gameSpeed < 12) gameSpeed += 0.2;
+                    
+                    spawnObstacle();
+                }
+            }, 20);
         }
-        document.getElementById('finalScore').textContent = Math.floor(score);
-        document.getElementById('gameOver').style.display = 'flex';
-    }
-
-    function resetGame() {
-        score = 0; speed = 6; obstacles = []; simits = []; gameActive = true;
-        document.getElementById('gameOver').style.display = 'none';
-        player.y = 0;
-        update();
-    }
-
-    update();
-</script>
+    </script>
 </body>
 </html>
