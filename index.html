@@ -3,57 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simit Runner | Nisa 🥨</title>
+    <title>Atmosphere Runner | Nisa 🥨</title>
     <style>
         body {
             margin: 0; padding: 0; overflow: hidden;
             background: #fff5f8; font-family: 'Segoe UI', sans-serif;
             display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            transition: background 1s ease; /* Arka plan geçişi yumuşak olsun */
         }
         #game-container {
-            position: relative; width: 600px; height: 300px;
-            background: white; border-bottom: 5px solid #880e4f;
-            border-radius: 20px; overflow: hidden;
-            display: none; /* Seçim yapılana kadar gizli */
-            box-shadow: 0 15px 35px rgba(248, 187, 208, 0.4);
+            position: relative; width: 600px; height: 350px;
+            background: rgba(255, 255, 255, 0.8); 
+            border-bottom: 5px solid #880e4f;
+            border-radius: 30px; overflow: hidden;
+            display: none; 
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
         }
         #player {
             position: absolute; bottom: 0; left: 50px;
-            width: 60px; height: 60px; font-size: 45px;
+            width: 65px; height: 65px; font-size: 50px;
             display: flex; align-items: center; justify-content: center;
             z-index: 10;
         }
         .obstacle {
             position: absolute; bottom: 0; right: -50px;
-            width: 40px; height: 40px; font-size: 30px;
+            width: 45px; height: 45px; font-size: 35px;
             display: flex; align-items: center; justify-content: center;
         }
         #score {
-            position: absolute; top: 15px; left: 20px;
-            font-size: 22px; font-weight: bold; color: #ad1457; z-index: 20;
+            position: absolute; top: 20px; left: 25px;
+            font-size: 24px; font-weight: bold; color: #5d4037; z-index: 20;
         }
 
         /* SEÇİM EKRANI */
         #selection-screen {
-            text-align: center; background: white; padding: 40px;
-            border-radius: 30px; box-shadow: 0 10px 40px rgba(248,187,208,0.6);
+            text-align: center; background: white; padding: 50px;
+            border-radius: 40px; box-shadow: 0 15px 45px rgba(248,187,208,0.5);
         }
-        h1 { color: #880e4f; margin-bottom: 30px; }
+        h1 { color: #880e4f; margin-bottom: 35px; font-size: 32px; }
         .char-box {
             display: inline-block; margin: 15px; padding: 25px;
             border: 3px solid #f8bbd0; border-radius: 25px;
-            cursor: pointer; transition: 0.3s; width: 120px;
+            cursor: pointer; transition: 0.4s; width: 130px;
+            background: white;
         }
-        .char-box:hover { background: #fce4ec; transform: translateY(-8px); border-color: #ad1457; }
-        .char-emoji { font-size: 55px; display: block; margin-bottom: 10px; }
-        .char-name { font-weight: bold; color: #880e4f; font-size: 14px; text-transform: uppercase; }
+        .char-box:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        /* Renk Paletleri */
+        .sun-hover:hover { border-color: #fdd835; background: #fffde7; }
+        .night-hover:hover { border-color: #1e88e5; background: #e3f2fd; }
+        .twi-hover:hover { border-color: #8e24aa; background: #f3e5f5; }
 
-        /* ZIPLAMA ANİMASYONU */
+        .char-emoji { font-size: 60px; display: block; margin-bottom: 12px; }
+        .char-name { font-weight: bold; color: #444; font-size: 15px; letter-spacing: 1px; }
+
         .jump { animation: jump-anim 0.5s cubic-bezier(0.21, 0.53, 0.56, 0.8); }
         @keyframes jump-anim {
             0% { bottom: 0; }
-            45% { bottom: 120px; }
-            55% { bottom: 120px; }
+            45% { bottom: 140px; }
+            55% { bottom: 140px; }
             100% { bottom: 0; }
         }
     </style>
@@ -61,27 +69,27 @@
 <body>
 
     <div id="selection-screen">
-        <h1>Karakterini Seç ✨</h1>
+        <h1>Atmosphere Runner ✨</h1>
         
-        <div class="char-box" onclick="startGame('🌻', 'Sunflower')">
+        <div class="char-box sun-hover" onclick="startGame('🌻', '#fff9c4')">
             <span class="char-emoji">🌻</span>
-            <span class="char-name">Sunflower</span>
+            <span class="char-name">SUNFLOWER</span>
         </div>
         
-        <div class="char-box" onclick="startGame('🌑', 'Nightmare')">
+        <div class="char-box night-hover" onclick="startGame('🌑', '#e1f5fe')">
             <span class="char-emoji">🌑</span>
-            <span class="char-name">Nightmare</span>
+            <span class="char-name">NIGHTMARE</span>
         </div>
         
-        <div class="char-box" onclick="startGame('✨', 'Twilight')">
+        <div class="char-box twi-hover" onclick="startGame('✨', '#f3e5f5')">
             <span class="char-emoji">✨</span>
-            <span class="char-name">Twilight</span>
+            <span class="char-name">TWILIGHT</span>
         </div>
 
-        <p style="color: #ad1457; margin-top: 25px; font-weight: 600;">Zıplamak için tıkla veya Boşluk tuşuna bas!</p>
+        <p style="color: #ad1457; margin-top: 30px; font-weight: 600;">Modunu seç ve zıplamaya başla!</p>
     </div>
 
-    <div id="game-container" id="gameArea" onclick="jump()">
+    <div id="game-container" onclick="jump()">
         <div id="score">Skor: 0</div>
         <div id="player">🌻</div>
     </div>
@@ -95,17 +103,19 @@
         let score = 0;
         let isJumping = false;
         let gameActive = false;
-        let gameSpeed = 5; // Başlangıç hızı
+        let gameSpeed = 5;
 
-        function startGame(emoji, name) {
+        function startGame(emoji, bgColor) {
             player.innerText = emoji;
+            // Arka plan rengini seçime göre değiştir
+            document.body.style.background = bgColor;
+            
             selectionScreen.style.display = 'none';
             gameContainer.style.display = 'block';
             gameActive = true;
             score = 0;
             gameSpeed = 5;
             spawnObstacle();
-            console.log(name + " sahneye çıktı! ✨");
         }
 
         function jump() {
@@ -121,7 +131,7 @@
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
-                e.preventDefault(); // Sayfanın aşağı kaymasını engeller
+                e.preventDefault();
                 jump();
             }
         });
@@ -144,13 +154,11 @@
                 pos -= gameSpeed;
                 obstacle.style.left = pos + 'px';
 
-                // Çarpışma Testi
                 let pBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
                 
-                // Oyuncu kutusu ile simit kutusu yakınlaştığında
-                if (pos < 90 && pos > 50 && pBottom < 50) {
+                if (pos < 90 && pos > 40 && pBottom < 55) {
                     gameActive = false;
-                    alert("Oyun Bitti! Skorun: " + score + "\nTekrar denemek için tamam de!");
+                    alert("Oyun Bitti! Atmosferden düştün. ✨\nSkorun: " + score);
                     location.reload();
                 }
 
@@ -159,10 +167,7 @@
                     obstacle.remove();
                     score += 10;
                     scoreElement.innerText = "Skor: " + score;
-                    
-                    // Puan arttıkça hızı minik minik artır (Max 12 hız)
-                    if (gameSpeed < 12) gameSpeed += 0.2;
-                    
+                    if (gameSpeed < 13) gameSpeed += 0.25;
                     spawnObstacle();
                 }
             }, 20);
