@@ -9,11 +9,11 @@
             margin: 0; padding: 0; overflow: hidden;
             background: #fff5f8; font-family: 'Segoe UI', sans-serif;
             display: flex; justify-content: center; align-items: center; min-height: 100vh;
-            transition: background 1s ease; /* Arka plan geçişi yumuşak olsun */
+            transition: background 1s ease;
         }
         #game-container {
             position: relative; width: 600px; height: 350px;
-            background: rgba(255, 255, 255, 0.8); 
+            background: rgba(255, 255, 255, 0.9); 
             border-bottom: 5px solid #880e4f;
             border-radius: 30px; overflow: hidden;
             display: none; 
@@ -30,38 +30,38 @@
             width: 45px; height: 45px; font-size: 35px;
             display: flex; align-items: center; justify-content: center;
         }
-        #score {
+        /* ÖDÜL (ALTIN SİMİT) */
+        .reward {
+            position: absolute; bottom: 100px; right: -50px;
+            width: 40px; height: 40px; font-size: 30px;
+            animation: float 1s infinite alternate;
+        }
+        @keyframes float { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+
+        #score-board {
             position: absolute; top: 20px; left: 25px;
             font-size: 24px; font-weight: bold; color: #5d4037; z-index: 20;
         }
 
         /* SEÇİM EKRANI */
         #selection-screen {
-            text-align: center; background: white; padding: 50px;
+            text-align: center; background: white; padding: 40px;
             border-radius: 40px; box-shadow: 0 15px 45px rgba(248,187,208,0.5);
         }
-        h1 { color: #880e4f; margin-bottom: 35px; font-size: 32px; }
+        .char-grid { display: flex; flex-wrap: wrap; justify-content: center; max-width: 500px; }
         .char-box {
-            display: inline-block; margin: 15px; padding: 25px;
-            border: 3px solid #f8bbd0; border-radius: 25px;
-            cursor: pointer; transition: 0.4s; width: 130px;
-            background: white;
+            margin: 10px; padding: 20px; border: 3px solid #f8bbd0;
+            border-radius: 20px; cursor: pointer; transition: 0.3s; width: 110px;
         }
-        .char-box:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        
-        /* Renk Paletleri */
-        .sun-hover:hover { border-color: #fdd835; background: #fffde7; }
-        .night-hover:hover { border-color: #1e88e5; background: #e3f2fd; }
-        .twi-hover:hover { border-color: #8e24aa; background: #f3e5f5; }
-
-        .char-emoji { font-size: 60px; display: block; margin-bottom: 12px; }
-        .char-name { font-weight: bold; color: #444; font-size: 15px; letter-spacing: 1px; }
+        .char-box:hover { transform: scale(1.05); background: #fce4ec; }
+        .char-emoji { font-size: 50px; display: block; }
+        .char-name { font-weight: bold; font-size: 12px; margin-top: 10px; display: block; }
 
         .jump { animation: jump-anim 0.5s cubic-bezier(0.21, 0.53, 0.56, 0.8); }
         @keyframes jump-anim {
             0% { bottom: 0; }
-            45% { bottom: 140px; }
-            55% { bottom: 140px; }
+            45% { bottom: 150px; }
+            55% { bottom: 150px; }
             100% { bottom: 0; }
         }
     </style>
@@ -70,27 +70,25 @@
 
     <div id="selection-screen">
         <h1>Atmosphere Runner ✨</h1>
-        
-        <div class="char-box sun-hover" onclick="startGame('🌻', '#fff9c4')">
-            <span class="char-emoji">🌻</span>
-            <span class="char-name">SUNFLOWER</span>
+        <div class="char-grid">
+            <div class="char-box" onclick="startGame('🌻', '#fff9c4')">
+                <span class="char-emoji">🌻</span><span class="char-name">SUNFLOWER</span>
+            </div>
+            <div class="char-box" onclick="startGame('🌑', '#e1f5fe')">
+                <span class="char-emoji">🌑</span><span class="char-name">NIGHTMARE</span>
+            </div>
+            <div class="char-box" onclick="startGame('✨', '#f3e5f5')">
+                <span class="char-emoji">✨</span><span class="char-name">TWILIGHT</span>
+            </div>
+            <div class="char-box" onclick="startGame('🌠', '#e0f2f1')">
+                <span class="char-emoji">🌠</span><span class="char-name">STARDUST</span>
+            </div>
         </div>
-        
-        <div class="char-box night-hover" onclick="startGame('🌑', '#e1f5fe')">
-            <span class="char-emoji">🌑</span>
-            <span class="char-name">NIGHTMARE</span>
-        </div>
-        
-        <div class="char-box twi-hover" onclick="startGame('✨', '#f3e5f5')">
-            <span class="char-emoji">✨</span>
-            <span class="char-name">TWILIGHT</span>
-        </div>
-
-        <p style="color: #ad1457; margin-top: 30px; font-weight: 600;">Modunu seç ve zıplamaya başla!</p>
+        <p>Altın simitleri (🥯) toplayarak ekstra puan kazan!</p>
     </div>
 
     <div id="game-container" onclick="jump()">
-        <div id="score">Skor: 0</div>
+        <div id="score-board">Skor: 0</div>
         <div id="player">🌻</div>
     </div>
 
@@ -98,7 +96,7 @@
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
         const selectionScreen = document.getElementById('selection-screen');
-        const scoreElement = document.getElementById('score');
+        const scoreElement = document.getElementById('score-board');
 
         let score = 0;
         let isJumping = false;
@@ -107,70 +105,90 @@
 
         function startGame(emoji, bgColor) {
             player.innerText = emoji;
-            // Arka plan rengini seçime göre değiştir
             document.body.style.background = bgColor;
-            
             selectionScreen.style.display = 'none';
             gameContainer.style.display = 'block';
             gameActive = true;
             score = 0;
             gameSpeed = 5;
-            spawnObstacle();
+            gameLoop();
         }
 
         function jump() {
             if (!isJumping && gameActive) {
                 isJumping = true;
                 player.classList.add('jump');
-                setTimeout(() => {
-                    player.classList.remove('jump');
-                    isJumping = false;
-                }, 500);
+                setTimeout(() => { player.classList.remove('jump'); isJumping = false; }, 500);
             }
         }
 
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                jump();
-            }
-        });
+        document.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); jump(); } });
+
+        function gameLoop() {
+            if (!gameActive) return;
+            spawnObstacle();
+            // Her 5 saniyede bir ödül şansı
+            setTimeout(() => { if(gameActive) spawnReward(); }, 3000 + Math.random() * 5000);
+        }
 
         function spawnObstacle() {
             if (!gameActive) return;
-
-            const obstacle = document.createElement('div');
-            obstacle.classList.add('obstacle');
-            obstacle.innerText = '🥨';
-            gameContainer.appendChild(obstacle);
+            const obs = document.createElement('div');
+            obs.classList.add('obstacle');
+            obs.innerText = '🥨';
+            gameContainer.appendChild(obs);
 
             let pos = 600;
             let move = setInterval(() => {
-                if (!gameActive) {
-                    clearInterval(move);
-                    return;
-                }
-
+                if (!gameActive) { clearInterval(move); return; }
                 pos -= gameSpeed;
-                obstacle.style.left = pos + 'px';
+                obs.style.left = pos + 'px';
 
                 let pBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
-                
-                if (pos < 90 && pos > 40 && pBottom < 55) {
+                if (pos < 90 && pos > 40 && pBottom < 50) {
                     gameActive = false;
-                    alert("Oyun Bitti! Atmosferden düştün. ✨\nSkorun: " + score);
+                    alert("Oyun Bitti! Skorun: " + score);
                     location.reload();
                 }
 
                 if (pos < -50) {
                     clearInterval(move);
-                    obstacle.remove();
+                    obs.remove();
                     score += 10;
                     scoreElement.innerText = "Skor: " + score;
-                    if (gameSpeed < 13) gameSpeed += 0.25;
+                    if (gameSpeed < 14) gameSpeed += 0.2;
                     spawnObstacle();
                 }
             }, 20);
+        }
+
+        function spawnReward() {
+            if (!gameActive) return;
+            const rew = document.createElement('div');
+            rew.classList.add('reward');
+            rew.innerText = '🥯'; // Altın Simit / Bagel Ödülü
+            gameContainer.appendChild(rew);
+
+            let pos = 600;
+            let move = setInterval(() => {
+                if (!gameActive) { clearInterval(move); return; }
+                pos -= gameSpeed;
+                rew.style.left = pos + 'px';
+
+                let pBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
+                // Ödül toplama kontrolü (Ödül havada olduğu için pBottom > 80 bakıyoruz)
+                if (pos < 90 && pos > 40 && pBottom > 80) {
+                    score += 50; // Ödül 50 puan!
+                    scoreElement.innerText = "Skor: " + score + " (BONUS! ✨)";
+                    clearInterval(move);
+                    rew.remove();
+                }
+
+                if (pos < -50) { clearInterval(move); rew.remove(); }
+            }, 20);
+            
+            // Bir sonraki ödül zamanını ayarla
+            setTimeout(() => { if(gameActive) spawnReward(); }, 7000 + Math.random() * 5000);
         }
     </script>
 </body>
