@@ -5,18 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atmosphere Runner | Nisa 🥨</title>
     <style>
-        :root { --main-pink: #ad1457; --soft-pink: #fce4ec; }
+        :root { --soft-pink: #fce4ec; --ui-color: #ad1457; --bg-color: #fff5f8; --border-color: #ad1457; }
         body {
             margin: 0; padding: 0; overflow: hidden;
-            background: #fff5f8; font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-color); font-family: 'Segoe UI', sans-serif;
             display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            transition: background 1s ease; /* Renk geçişi yumuşak olsun */
         }
         #game-container {
             position: relative; width: 600px; height: 300px;
-            background: white; border-bottom: 4px solid var(--main-pink);
+            background: rgba(255, 255, 255, 0.9); /* Arka planı biraz saydam yapalım ki renk vursun */
+            border-bottom: 4px solid var(--border-color);
             border-radius: 20px; overflow: hidden; display: none;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             cursor: pointer;
+            transition: border-color 1s ease;
         }
         #player {
             position: absolute; bottom: 0; left: 50px;
@@ -33,7 +36,8 @@
         
         #ui-layer {
             position: absolute; top: 15px; left: 20px; font-weight: bold; 
-            color: var(--main-pink); font-size: 18px; z-index: 100;
+            color: var(--ui-color); font-size: 18px; z-index: 100;
+            transition: color 1s ease;
         }
         #selection-screen {
             text-align: center; background: white; padding: 30px;
@@ -43,27 +47,28 @@
         .char-box {
             padding: 15px; border: 2px solid var(--soft-pink);
             border-radius: 15px; cursor: pointer; transition: 0.2s; width: 100px;
+            background: white; /* Seçim ekranı her zaman beyaz kalsın */
         }
-        .char-box:hover { transform: translateY(-5px); background: var(--soft-pink); border-color: var(--main-pink); }
+        .char-box:hover { transform: translateY(-5px); background: var(--soft-pink); border-color: #ad1457; }
         .char-emoji { font-size: 40px; display: block; }
-        .char-name { font-size: 12px; font-weight: bold; color: var(--main-pink); margin-top: 5px; }
+        .char-name { font-size: 12px; font-weight: bold; color: #ad1457; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <div id="selection-screen">
-        <h2 style="color: var(--main-pink);">Karakterini Seç ✨</h2>
+        <h2 style="color: #ad1457;">Karakterini Seç ✨</h2>
         <div class="char-grid">
-            <div class="char-box" onclick="startGame('🌻')">
+            <div class="char-box" onclick="startGame('🌻', '#a5d6a7', '#5d4037', '#795548')">
                 <span class="char-emoji">🌻</span><span class="char-name">SUNFLOWER</span>
             </div>
-            <div class="char-box" onclick="startGame('🌑')">
+            <div class="char-box" onclick="startGame('🌑', '#7e57c2', '#e1f5fe', '#512da8')">
                 <span class="char-emoji">🌑</span><span class="char-name">NIGHTMARE</span>
             </div>
-            <div class="char-box" onclick="startGame('✨')">
+            <div class="char-box" onclick="startGame('✨', '#1a237e', '#fffde7', '#0d47a1')">
                 <span class="char-emoji">✨</span><span class="char-name">TWILIGHT</span>
             </div>
-            <div class="char-box" onclick="startGame('☀️')">
+            <div class="char-box" onclick="startGame('☀️', '#fff59d', '#8d6e63', '#fbc02d')">
                 <span class="char-emoji">☀️</span><span class="char-name">SUNSHINE</span>
             </div>
         </div>
@@ -89,8 +94,15 @@
     let obstacles = [];
     let rewards = [];
 
-    function startGame(emoji) {
+    // Yeni parametreler: bgColor (arka plan), uiColor (skor), borderColor (kenarlık)
+    function startGame(emoji, bgColor, uiColor, borderColor) {
         player.innerText = emoji;
+        
+        // CSS değişkenlerini dinamik olarak güncelliyoruz
+        document.documentElement.style.setProperty('--bg-color', bgColor);
+        document.documentElement.style.setProperty('--ui-color', uiColor);
+        document.documentElement.style.setProperty('--border-color', borderColor);
+
         document.getElementById('selection-screen').style.display = 'none';
         container.style.display = 'block';
         gameActive = true;
@@ -106,7 +118,6 @@
         }
     }
 
-    // Klavye kontrolü
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {
             e.preventDefault();
@@ -127,13 +138,11 @@
         }
         player.style.bottom = position + 'px';
 
-        // Engelleri Hareket Ettir
         obstacles.forEach((obs, index) => {
             let x = parseInt(obs.style.right || -50);
             x += speed;
             obs.style.right = x + 'px';
 
-            // Hitbox (Çarpışma)
             if (x > 500 && x < 540 && position < 40) {
                 gameOver();
             }
@@ -147,13 +156,11 @@
             }
         });
 
-        // Ödülleri Hareket Ettir
         rewards.forEach((rew, index) => {
             let x = parseInt(rew.style.right || -50);
             x += speed;
             rew.style.right = x + 'px';
 
-            // Ödül toplama
             if (x > 500 && x < 540 && position > 80) {
                 score += 50;
                 uiLayer.innerText = `Skor: ${score} ✨`;
@@ -173,7 +180,6 @@
     function spawnManager() {
         if (!gameActive) return;
         
-        // Engel oluştur
         const obs = document.createElement('div');
         obs.className = 'obstacle';
         obs.innerText = '🥨';
@@ -181,7 +187,6 @@
         container.appendChild(obs);
         obstacles.push(obs);
 
-        // Ödül şansı
         if (Math.random() > 0.6) {
             setTimeout(() => {
                 if(!gameActive) return;
@@ -201,6 +206,8 @@
     function gameOver() {
         gameActive = false;
         alert(`Oyun Bitti! Skorun: ${score}`);
+        
+        // Oyunu sıfırla, arka planı eski haline getir
         location.reload();
     }
 </script>
