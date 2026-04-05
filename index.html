@@ -3,192 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atmosphere Runner | Nisa 🥨</title>
+    <title>Atmosphere Runner Pro | Nisa 🥨</title>
     <style>
+        :root { --main-pink: #ad1457; --soft-pink: #fce4ec; }
         body {
             margin: 0; padding: 0; overflow: hidden;
-            background: #fff5f8; font-family: 'Segoe UI', sans-serif;
+            background: #fff5f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex; justify-content: center; align-items: center; min-height: 100vh;
-            transition: background 1s ease;
         }
         #game-container {
-            position: relative; width: 600px; height: 350px;
-            background: rgba(255, 255, 255, 0.9); 
-            border-bottom: 5px solid #880e4f;
-            border-radius: 30px; overflow: hidden;
-            display: none; 
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            position: relative; width: 600px; height: 300px;
+            background: white; border-bottom: 4px solid var(--main-pink);
+            border-radius: 20px; overflow: hidden; display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
         #player {
             position: absolute; bottom: 0; left: 50px;
-            width: 65px; height: 65px; font-size: 50px;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 10;
-        }
-        .obstacle {
-            position: absolute; bottom: 0; right: -50px;
-            width: 45px; height: 45px; font-size: 35px;
+            width: 50px; height: 50px; font-size: 40px;
             display: flex; align-items: center; justify-content: center;
         }
-        .reward {
-            position: absolute; bottom: 120px; right: -50px;
-            width: 45px; height: 45px; font-size: 35px;
-            display: flex; align-items: center; justify-content: center;
-            animation: float 1s infinite alternate;
+        .obstacle, .reward {
+            position: absolute; bottom: 0; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center; font-size: 30px;
         }
-        @keyframes float { from { transform: translateY(0); } to { transform: translateY(-20px); } }
-        #score-board {
-            position: absolute; top: 20px; left: 25px;
-            font-size: 24px; font-weight: bold; color: #5d4037; z-index: 20;
+        .reward { bottom: 100px; animation: bounce 0.6s infinite alternate; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+        
+        #ui-layer {
+            position: absolute; top: 15px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between;
+            font-weight: bold; color: var(--main-pink); font-size: 18px; z-index: 100;
         }
         #selection-screen {
-            text-align: center; background: white; padding: 40px;
-            border-radius: 40px; box-shadow: 0 15px 45px rgba(248,187,208,0.5);
+            text-align: center; background: white; padding: 30px;
+            border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         }
-        .char-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; }
+        .char-grid { display: flex; gap: 15px; margin-top: 20px; }
         .char-box {
-            padding: 20px; border: 3px solid #f8bbd0;
-            border-radius: 25px; cursor: pointer; transition: 0.3s; width: 120px;
+            padding: 15px; border: 2px solid var(--soft-pink);
+            border-radius: 15px; cursor: pointer; transition: 0.2s;
         }
-        .char-box:hover { transform: scale(1.1); background: #fce4ec; border-color: #ad1457; }
-        .char-emoji { font-size: 55px; display: block; }
-        .char-name { font-weight: bold; font-size: 13px; margin-top: 10px; display: block; color: #880e4f; }
-        .jump { animation: jump-anim 0.55s ease-out; }
-        @keyframes jump-anim {
-            0% { bottom: 0; }
-            45% { bottom: 160px; }
-            55% { bottom: 160px; }
-            100% { bottom: 0; }
-        }
+        .char-box:hover { transform: translateY(-5px); background: var(--soft-pink); }
+        .char-emoji { font-size: 40px; display: block; }
     </style>
 </head>
-<body>
+<body onkeydown="handleInput(event)" onclick="jump()">
 
     <div id="selection-screen">
-        <h1 style="color: #880e4f;">Atmosphere Runner ✨</h1>
+        <h2 style="color: var(--main-pink);">Atmosphere Runner ✨</h2>
         <div class="char-grid">
-            <div class="char-box" onclick="startGame('🌻', '#fff9c4')">
-                <span class="char-emoji">🌻</span><span class="char-name">SUNFLOWER</span>
-            </div>
-            <div class="char-box" onclick="startGame('🌑', '#e1f5fe')">
-                <span class="char-emoji">🌑</span><span class="char-name">NIGHTMARE</span>
-            </div>
-            <div class="char-box" onclick="startGame('✨', '#f3e5f5')">
-                <span class="char-emoji">✨</span><span class="char-name">TWILIGHT</span>
-            </div>
-            <div class="char-box" onclick="startGame('🌠', '#e0f2f1')">
-                <span class="char-emoji">🌠</span><span class="char-name">STARDUST</span>
-            </div>
+            <div class="char-box" onclick="startGame('🌻')"><span class="char-emoji">🌻</span></div>
+            <div class="char-box" onclick="startGame('🌑')"><span class="char-emoji">🌑</span></div>
+            <div class="char-box" onclick="startGame('✨')"><span class="char-emoji">✨</span></div>
+            <div class="char-box" onclick="startGame('🌠')"><span class="char-emoji">🌠</span></div>
         </div>
-        <p style="margin-top: 20px; color: #ad1457;"><b>Ödül:</b> Havada uçan altın simitleri (🥯) yakala!</p>
+        <p style="color: #666; font-size: 14px; margin-top: 15px;">Zıplamak için <b>Boşluk (Space)</b> veya <b>Ekrana Tıkla</b></p>
     </div>
 
-    <div id="game-container" onclick="jump()">
-        <div id="score-board">Skor: 0</div>
+    <div id="game-container">
+        <div id="ui-layer">
+            <div id="score-text">Skor: 0</div>
+            <div id="high-score">En Yüksek: 0</div>
+        </div>
         <div id="player">🌻</div>
     </div>
 
-    <script>
-        const player = document.getElementById('player');
-        const gameContainer = document.getElementById('game-container');
-        const selectionScreen = document.getElementById('selection-screen');
-        const scoreElement = document.getElementById('score-board');
+<script>
+    const player = document.getElementById('player');
+    const container = document.getElementById('game-container');
+    const scoreText = document.getElementById('score-text');
+    
+    let score = 0;
+    let gameActive = false;
+    let velocity = 0;
+    let position = 0;
+    let gravity = 0.6; // Yerçekimi sertliği
+    let jumpForce = 12; // Zıplama gücü
+    let speed = 6;
+    let obstacles = [];
+    let rewards = [];
 
-        let score = 0;
-        let isJumping = false;
-        let gameActive = false;
-        let gameSpeed = 5;
+    function startGame(emoji) {
+        player.innerText = emoji;
+        document.getElementById('selection-screen').style.display = 'none';
+        container.style.display = 'block';
+        gameActive = true;
+        requestAnimationFrame(update);
+        spawnManager();
+    }
 
-        function startGame(emoji, bgColor) {
-            player.innerText = emoji;
-            document.body.style.background = bgColor;
-            selectionScreen.style.display = 'none';
-            gameContainer.style.display = 'block';
-            gameActive = true;
-            score = 0;
-            gameSpeed = 6;
-            gameLoop();
+    function jump() {
+        if (gameActive && position === 0) {
+            velocity = jumpForce;
         }
+    }
 
-        function jump() {
-            if (!isJumping && gameActive) {
-                isJumping = true;
-                player.classList.add('jump');
-                setTimeout(() => { player.classList.remove('jump'); isJumping = false; }, 550);
-            }
+    function handleInput(e) {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            jump();
         }
+    }
 
-        document.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); jump(); } });
+    function update() {
+        if (!gameActive) return;
 
-        function gameLoop() {
-            if (!gameActive) return;
-            spawnObstacle();
-            // Ödül döngüsünü başlat
-            setTimeout(() => { if(gameActive) spawnReward(); }, 4000);
+        // Karakter Fiziği
+        position += velocity;
+        velocity -= gravity;
+
+        if (position < 0) {
+            position = 0;
+            velocity = 0;
         }
-
-        function spawnObstacle() {
-            if (!gameActive) return;
-            const obs = document.createElement('div');
-            obs.classList.add('obstacle');
-            obs.innerText = '🥨';
-            gameContainer.appendChild(obs);
-
-            let pos = 600;
-            let moveObs = setInterval(() => {
-                if (!gameActive) { clearInterval(moveObs); return; }
-                pos -= gameSpeed;
-                obs.style.left = pos + 'px';
-
-                let pBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
-                
-                // Engel Çarpışma
-                if (pos < 90 && pos > 40 && pBottom < 55) {
-                    gameActive = false;
-                    alert("Eyvah! Atmosferden düştün. 🌠\nSkorun: " + score);
-                    location.reload();
-                }
-
-                if (pos < -50) {
-                    clearInterval(moveObs);
-                    obs.remove();
-                    score += 10;
-                    scoreElement.innerText = "Skor: " + score;
-                    if (gameSpeed < 15) gameSpeed += 0.25;
-                    spawnObstacle();
-                }
-            }, 20);
-        }
-
-        function spawnReward() {
-            if (!gameActive) return;
-            const rew = document.createElement('div');
-            rew.classList.add('reward');
-            rew.innerText = '🥯'; 
-            gameContainer.appendChild(rew);
-
-            let pos = 600;
-            let moveRew = setInterval(() => {
-                if (!gameActive) { clearInterval(moveRew); return; }
-                pos -= gameSpeed;
-                rew.style.left = pos + 'px';
-
-                let pBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
-                
-                // Ödül Toplama (Havada yakalama)
-                if (pos < 95 && pos > 35 && pBottom > 90) {
-                    score += 50;
-                    scoreElement.innerText = "Skor: " + score + " ✨ BONUS!";
-                    clearInterval(moveRew);
-                    rew.remove();
-                }
-
-                if (pos < -50) { clearInterval(moveRew); rew.remove(); }
-            }, 20);
-            
-            // Yeni ödül bekleme süresi
-            setTimeout(() => { if(gameActive) spawnReward(); }, 6000 + Math.random() * 5000);
-        }
-    </script>
-</body>
-</html>
+        player.style.bottom = position + 'px';
