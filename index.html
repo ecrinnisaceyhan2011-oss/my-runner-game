@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atmosphere Runner Pro | Nisa 🥨</title>
+    <title>Atmosphere Runner | Nisa 🥨</title>
     <style>
         :root { --main-pink: #ad1457; --soft-pink: #fce4ec; }
         body {
             margin: 0; padding: 0; overflow: hidden;
-            background: #fff5f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff5f8; font-family: 'Segoe UI', sans-serif;
             display: flex; justify-content: center; align-items: center; min-height: 100vh;
         }
         #game-container {
@@ -16,11 +16,13 @@
             background: white; border-bottom: 4px solid var(--main-pink);
             border-radius: 20px; overflow: hidden; display: none;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            cursor: pointer;
         }
         #player {
             position: absolute; bottom: 0; left: 50px;
             width: 50px; height: 50px; font-size: 40px;
             display: flex; align-items: center; justify-content: center;
+            transition: bottom 0.1s linear;
         }
         .obstacle, .reward {
             position: absolute; bottom: 0; width: 40px; height: 40px;
@@ -30,9 +32,8 @@
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
         
         #ui-layer {
-            position: absolute; top: 15px; left: 20px; right: 20px;
-            display: flex; justify-content: space-between;
-            font-weight: bold; color: var(--main-pink); font-size: 18px; z-index: 100;
+            position: absolute; top: 15px; left: 20px; font-weight: bold; 
+            color: var(--main-pink); font-size: 18px; z-index: 100;
         }
         #selection-screen {
             text-align: center; background: white; padding: 30px;
@@ -41,44 +42,49 @@
         .char-grid { display: flex; gap: 15px; margin-top: 20px; }
         .char-box {
             padding: 15px; border: 2px solid var(--soft-pink);
-            border-radius: 15px; cursor: pointer; transition: 0.2s;
+            border-radius: 15px; cursor: pointer; transition: 0.2s; width: 100px;
         }
-        .char-box:hover { transform: translateY(-5px); background: var(--soft-pink); }
+        .char-box:hover { transform: translateY(-5px); background: var(--soft-pink); border-color: var(--main-pink); }
         .char-emoji { font-size: 40px; display: block; }
+        .char-name { font-size: 12px; font-weight: bold; color: var(--main-pink); margin-top: 5px; }
     </style>
 </head>
-<body onkeydown="handleInput(event)" onclick="jump()">
+<body>
 
     <div id="selection-screen">
-        <h2 style="color: var(--main-pink);">Atmosphere Runner ✨</h2>
+        <h2 style="color: var(--main-pink);">Karakterini Seç ✨</h2>
         <div class="char-grid">
-            <div class="char-box" onclick="startGame('🌻')"><span class="char-emoji">🌻</span></div>
-            <div class="char-box" onclick="startGame('🌑')"><span class="char-emoji">🌑</span></div>
-            <div class="char-box" onclick="startGame('✨')"><span class="char-emoji">✨</span></div>
-            <div class="char-box" onclick="startGame('🌠')"><span class="char-emoji">🌠</span></div>
+            <div class="char-box" onclick="startGame('🌻')">
+                <span class="char-emoji">🌻</span><span class="char-name">SUNFLOWER</span>
+            </div>
+            <div class="char-box" onclick="startGame('🌑')">
+                <span class="char-emoji">🌑</span><span class="char-name">NIGHTMARE</span>
+            </div>
+            <div class="char-box" onclick="startGame('✨')">
+                <span class="char-emoji">✨</span><span class="char-name">TWILIGHT</span>
+            </div>
+            <div class="char-box" onclick="startGame('☀️')">
+                <span class="char-emoji">☀️</span><span class="char-name">SUNSHINE</span>
+            </div>
         </div>
-        <p style="color: #666; font-size: 14px; margin-top: 15px;">Zıplamak için <b>Boşluk (Space)</b> veya <b>Ekrana Tıkla</b></p>
     </div>
 
-    <div id="game-container">
-        <div id="ui-layer">
-            <div id="score-text">Skor: 0</div>
-            <div id="high-score">En Yüksek: 0</div>
-        </div>
+    <div id="game-container" onmousedown="jump()">
+        <div id="ui-layer">Skor: 0</div>
         <div id="player">🌻</div>
     </div>
 
 <script>
     const player = document.getElementById('player');
     const container = document.getElementById('game-container');
-    const scoreText = document.getElementById('score-text');
+    const uiLayer = document.getElementById('ui-layer');
     
     let score = 0;
     let gameActive = false;
     let velocity = 0;
     let position = 0;
-    let gravity = 0.6; // Yerçekimi sertliği
-    let jumpForce = 12; // Zıplama gücü
+    let gravity = 0.7; 
+    let jumpForce = 13; 
     let speed = 6;
     let obstacles = [];
     let rewards = [];
@@ -88,6 +94,8 @@
         document.getElementById('selection-screen').style.display = 'none';
         container.style.display = 'block';
         gameActive = true;
+        score = 0;
+        speed = 6;
         requestAnimationFrame(update);
         spawnManager();
     }
@@ -98,12 +106,13 @@
         }
     }
 
-    function handleInput(e) {
+    // Klavye kontrolü
+    window.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {
             e.preventDefault();
             jump();
         }
-    }
+    });
 
     function update() {
         if (!gameActive) return;
@@ -117,3 +126,83 @@
             velocity = 0;
         }
         player.style.bottom = position + 'px';
+
+        // Engelleri Hareket Ettir
+        obstacles.forEach((obs, index) => {
+            let x = parseInt(obs.style.right || -50);
+            x += speed;
+            obs.style.right = x + 'px';
+
+            // Hitbox (Çarpışma)
+            if (x > 500 && x < 540 && position < 40) {
+                gameOver();
+            }
+
+            if (x > 650) {
+                obs.remove();
+                obstacles.splice(index, 1);
+                score += 10;
+                uiLayer.innerText = `Skor: ${score}`;
+                if(speed < 15) speed += 0.15;
+            }
+        });
+
+        // Ödülleri Hareket Ettir
+        rewards.forEach((rew, index) => {
+            let x = parseInt(rew.style.right || -50);
+            x += speed;
+            rew.style.right = x + 'px';
+
+            // Ödül toplama
+            if (x > 500 && x < 540 && position > 80) {
+                score += 50;
+                uiLayer.innerText = `Skor: ${score} ✨`;
+                rew.remove();
+                rewards.splice(index, 1);
+            }
+
+            if (x > 650) {
+                rew.remove();
+                rewards.splice(index, 1);
+            }
+        });
+
+        requestAnimationFrame(update);
+    }
+
+    function spawnManager() {
+        if (!gameActive) return;
+        
+        // Engel oluştur
+        const obs = document.createElement('div');
+        obs.className = 'obstacle';
+        obs.innerText = '🥨';
+        obs.style.right = '-50px';
+        container.appendChild(obs);
+        obstacles.push(obs);
+
+        // Ödül şansı
+        if (Math.random() > 0.6) {
+            setTimeout(() => {
+                if(!gameActive) return;
+                const rew = document.createElement('div');
+                rew.className = 'reward';
+                rew.innerText = '🥯';
+                rew.style.right = '-50px';
+                container.appendChild(rew);
+                rewards.push(rew);
+            }, 700);
+        }
+
+        let nextSpawn = 1200 + Math.random() * 1500;
+        setTimeout(spawnManager, nextSpawn / (speed/6));
+    }
+
+    function gameOver() {
+        gameActive = false;
+        alert(`Oyun Bitti! Skorun: ${score}`);
+        location.reload();
+    }
+</script>
+</body>
+</html>
